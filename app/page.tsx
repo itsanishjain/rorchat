@@ -755,6 +755,21 @@ export default function Home() {
     }
   }
 
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    const items = e.clipboardData.items
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const file = items[i].getAsFile()
+        if (file) {
+          e.preventDefault()
+          if (!currentUser || rateLimitCountdown > 0 || imagePreview) return
+          await handleChatImageFile(file)
+          break
+        }
+      }
+    }
+  }
+
   const pickChatImage = async () => {
     if (!currentUser || rateLimitCountdown > 0 || imagePreview) return
     const file = await pickFile('image/jpeg,image/png,image/gif,image/webp')
@@ -1288,6 +1303,7 @@ export default function Home() {
                 if (rateLimitCountdown === 0) setMessageError('')
                 handleTyping()
               }}
+              onPaste={handlePaste}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault()

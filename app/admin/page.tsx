@@ -476,11 +476,7 @@ export default function Admin() {
     })
   }
 
-  const pickChatImage = async () => {
-    if (!selectedConv || imagePreview) return
-    const file = await pickFile('image/jpeg,image/png,image/gif,image/webp')
-    if (!file) return
-
+  const handleChatImageFile = async (file: File) => {
     try {
       const { processImage, validateImageFile } = await import('@/lib/imageUtils')
       const validation = validateImageFile(file)
@@ -496,6 +492,28 @@ export default function Admin() {
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process image')
+    }
+  }
+
+  const pickChatImage = async () => {
+    if (!selectedConv || imagePreview) return
+    const file = await pickFile('image/jpeg,image/png,image/gif,image/webp')
+    if (!file) return
+    await handleChatImageFile(file)
+  }
+
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    const items = e.clipboardData.items
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const file = items[i].getAsFile()
+        if (file) {
+          e.preventDefault()
+          if (!selectedConv || imagePreview) return
+          await handleChatImageFile(file)
+          break
+        }
+      }
     }
   }
 
@@ -987,6 +1005,7 @@ export default function Admin() {
                       target.style.height = 'auto'
                       target.style.height = `${target.scrollHeight + 4}px`
                     }}
+                    onPaste={handlePaste}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault()
